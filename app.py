@@ -9,7 +9,7 @@ from tensorflow.keras.models import load_model
 from PIL import Image, UnidentifiedImageError
 
 # ---------- Config ----------
-IMG_TARGET_SIZE = (224, 224)  # change if your model expects another size
+IMG_TARGET_SIZE = (224, 224)
 TOP_K = 5
 
 class_labels = [
@@ -34,11 +34,11 @@ st.write("Upload your image. The app will predict the disease and provide a shor
 uploaded_model = st.file_uploader("Upload Keras model file (.h5)", type=["h5"], key="model_uploader")
 uploaded_image = st.file_uploader("Upload an image (jpg / png)", type=["jpg", "jpeg", "png"], key="image_uploader")
 
-# Load Google API key from Streamlit secrets (if present)
+
 if "GOOGLE_API_KEY" in st.secrets:
     os.environ["GOOGLE_API_KEY"] = st.secrets["GOOGLE_API_KEY"]
 
-# ---------- Helpers ----------
+
 @st.cache_resource
 def load_model_from_bytes(model_bytes: bytes):
     """
@@ -79,7 +79,7 @@ def sizeof_fmt(num, suffix='B'):
         num /= 1024.0
     return f"{num:.1f}Y{suffix}"
 
-# ---------- App logic ----------
+
 if uploaded_model is None:
     st.info("Please upload a `.h5` model file.")
 if uploaded_image is None:
@@ -87,7 +87,7 @@ if uploaded_image is None:
 
 if uploaded_model is not None and uploaded_image is not None:
     try:
-        # Read model bytes (safe for various file-like objects)
+        
         model_bytes = uploaded_model.read()
         model_size = len(model_bytes)
         st.write(f"**Model file:** {getattr(uploaded_model, 'name', 'uploaded_model.h5')}  —  {sizeof_fmt(model_size)}")
@@ -101,7 +101,7 @@ if uploaded_model is not None and uploaded_image is not None:
             model = load_model_from_bytes(model_bytes)
         st.success("Model loaded successfully.")
 
-        # Read and validate image
+        
         try:
             image_bytes = uploaded_image.read()
             pil_img = Image.open(io.BytesIO(image_bytes))
@@ -116,17 +116,17 @@ if uploaded_model is not None and uploaded_image is not None:
 
         st.image(pil_img, caption="Input image", use_column_width=True)
 
-        # Preprocess and predict
+        
         x = preprocess_pil(pil_img)
         with st.spinner("Running prediction..."):
             topk, full_preds = predict_topk(model, x, TOP_K)
 
-        # Show only the top-1 prediction
-        top_label, top_prob = topk[0]  # first element is the highest probability
+       
+        top_label, top_prob = topk[0]  
         st.subheader("Top prediction")
         st.write(f"**{top_label}**")
 
-        # Checkbox to show full probability table (ONLY when clicked)
+        
         if st.checkbox("Show full probabilities"):
             df = pd.DataFrame({
                 "class_index": list(range(len(full_preds))),
@@ -147,7 +147,7 @@ if uploaded_model is not None and uploaded_image is not None:
                 st.error(f"Could not import ChatGoogleGenerativeAI: {e}. Install the appropriate package to enable AI explanations.")
 
             if llm_available:
-                # Farmer-friendly prompt: recognition, quick actions, prevention — ≤100 words
+                
                 prompt = (
                     f"Explain the plant disease '{top_label}' for a farmer in simple layman terms. "
                     "In up to 100 words describe: (1) how to recognize the disease (key signs), "
@@ -178,5 +178,6 @@ else:
     st.write("")
 
 st.markdown("---")
+
 
 
