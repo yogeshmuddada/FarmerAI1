@@ -1,7 +1,9 @@
 streamlit
 tensorflow
 numpy
-Pillow
 pandas
-matplotlib
-
+Pillow
+langchain
+langchain-google-genai
+python-dotenv
+huggingface-hub
