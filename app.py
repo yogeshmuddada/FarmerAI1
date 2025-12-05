@@ -10,9 +10,9 @@ import pandas as pd
 
 # ---------- Config ----------
 IMG_TARGET_SIZE = (224, 224)  # change if your model expects another size
-TOP_K = 5  
+TOP_K = 5
 
-class_labels= [
+class_labels = [
     'Apple___Apple_scab', 'Apple___Black_rot', 'Apple___Cedar_apple_rust', 'Apple___healthy',
     'Blueberry___healthy', 'Cherry_(including_sour)___Powdery_mildew', 'Cherry_(including_sour)___healthy',
     'Corn_(maize)___Cercospora_leaf_spot Gray_leaf_spot', 'Corn_(maize)___Common_rust_', 'Corn_(maize)___Northern_Leaf_Blight',
@@ -29,10 +29,14 @@ class_labels= [
 # ---------- UI ----------
 st.set_page_config(page_title="Plant Disease Predictor — Upload Model & Image", layout="centered")
 st.title("🌿 Plant Disease Classifier")
-st.write("Upload your image. The app will load the model and predict the disease.")
+st.write("Upload your image. The app will load the model and predict the disease, then provide a short explanation.")
 
 uploaded_model = st.file_uploader("Upload Keras model file (.h5)", type=["h5"], key="model_uploader")
 uploaded_image = st.file_uploader("Upload an image (jpg / png)", type=["jpg", "jpeg", "png"], key="image_uploader")
+
+# Load Google API key from Streamlit secrets (if present)
+if "GOOGLE_API_KEY" in st.secrets:
+    os.environ["GOOGLE_API_KEY"] = st.secrets["GOOGLE_API_KEY"]
 
 # ---------- Helpers ----------
 @st.cache_resource
@@ -130,6 +134,38 @@ if uploaded_model is not None and uploaded_image is not None:
                 "probability": full_preds
             }).sort_values("probability", ascending=False).reset_index(drop=True)
             st.dataframe(df)
+
+        # ----------------- AI Explanation (Gemini) -----------------
+        # Only attempt if GOOGLE_API_KEY is present and langchain_google_genai is installed
+        if not os.environ.get("GOOGLE_API_KEY"):
+            st.warning("GOOGLE_API_KEY not found in .streamlit/secrets.toml. AI explanation will be skipped.")
+        else:
+            try:
+                from langchain_google_genai import ChatGoogleGenerativeAI
+                llm_available = True
+            except Exception as e:
+                llm_available = False
+                st.error(f"Could not import ChatGoogleGenerativeAI: {e}. Install the appropriate package to enable AI explanations.")
+
+            if llm_available:
+                # Prepare a compact, farmer-friendly prompt
+                prompt = (
+                    f"Explain the plant disease '{top_label}' for a farmer in simple layman terms. "
+                    "In up to 100 words describe: (1) how to recognize the disease (key signs), "
+                    "(2) two short immediate actions to stop spread, and (3) one prevention tip. "
+                    "Use plain language and avoid technical jargon."
+                )
+
+                with st.spinner("Generating short explanation with AI..."):
+                    try:
+                        llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash")
+                        result = llm.invoke(prompt)
+                        ai_response = getattr(result, "content", None) or str(result)
+                    except Exception as e:
+                        ai_response = f"AI generation failed: {e}"
+
+                st.subheader("🧠 AI Explanation (layman, ≤100 words)")
+                st.write(ai_response)
 
     except Exception as e:
         st.error("Error while loading model or predicting.")
