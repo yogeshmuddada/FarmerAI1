@@ -124,7 +124,7 @@ if uploaded_model is not None and uploaded_image is not None:
         # Show only the top-1 prediction
         top_label, top_prob = topk[0]  # first element is the highest probability
         st.subheader("Top prediction")
-        st.write(f"**{top_label}** — {top_prob:.4f}")
+        st.write(f"**{top_label}**")
 
         # Checkbox to show full probability table (ONLY when clicked)
         if st.checkbox("Show full probabilities"):
@@ -178,4 +178,5 @@ else:
     st.write("")
 
 st.markdown("---")
+
 
