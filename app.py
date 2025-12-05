@@ -29,7 +29,7 @@ class_labels = [
 # ---------- Streamlit UI ----------
 st.set_page_config(page_title="Plant Disease Predictor — Upload Model & Image", layout="centered")
 st.title("🌿 Plant Disease Classifier")
-st.write("Upload your `.h5` model and an image. The app will predict the disease and provide a short AI explanation.")
+st.write("Upload your image. The app will predict the disease and provide a short AI explanation.")
 
 uploaded_model = st.file_uploader("Upload Keras model file (.h5)", type=["h5"], key="model_uploader")
 uploaded_image = st.file_uploader("Upload an image (jpg / png)", type=["jpg", "jpeg", "png"], key="image_uploader")
@@ -163,7 +163,7 @@ if uploaded_model is not None and uploaded_image is not None:
                     except Exception as e:
                         ai_response = f"AI generation failed: {e}"
 
-                st.subheader("AI Explanation (layman, ≤100 words)")
+                st.subheader("AI Explanation")
                 st.write(ai_response)
 
     except Exception as e:
@@ -178,3 +178,4 @@ else:
     st.write("")
 
 st.markdown("---")
+
