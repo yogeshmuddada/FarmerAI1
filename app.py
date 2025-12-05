@@ -149,10 +149,29 @@ if uploaded_model is not None and uploaded_image is not None:
             if llm_available:
                 
                 prompt = (
-                    f"Explain the plant disease '{top_label}' for a farmer in simple layman terms. "
-                    "In up to 100 words describe: (1) how to recognize the disease (key signs), "
-                    "(2) two short immediate actions to stop spread, and (3) one prevention tip. "
-                    "Use plain language and avoid technical jargon."
+                f"""
+You are an agricultural expert. The detected plant condition is: '{predicted_class}'.
+
+Your task:
+1. If the class indicates a DISEASE, provide:
+   - A simple explanation in very easy layman language that farmers can understand (max 100 words)
+   - Precautions farmers should take for that crop and disease
+   - Recommended pesticides (common, widely available options)
+   - Organic or natural methods to control or cure the disease
+   - Tips to improve yield
+
+2. If the class is 'Healthy', provide:
+   - Simple confirmation that the plant is healthy
+   - General care tips to maintain good yield
+
+Supported classes:
+Corn: Common Rust, Gray Leaf Spot, Leaf Blight, Healthy
+Potato: Early Blight, Late Blight, Healthy
+Rice: Brown Spot, Hispa, Leaf Blast, Healthy
+Wheat: Brown Rust, Yellow Rust, Healthy
+
+Your answer must be short, clear, structured, and farmer-friendly.
+""")
                 )
 
                 with st.spinner("Generating short explanation with AI..."):
@@ -178,6 +197,7 @@ else:
     st.write("")
 
 st.markdown("---")
+
 
 
 
