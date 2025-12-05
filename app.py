@@ -1,12 +1,12 @@
 # app.py
-import streamlit as st
-from tensorflow.keras.models import load_model
-import numpy as np
-from PIL import Image, UnidentifiedImageError
-import io
 import os
+import io
 import tempfile
+import streamlit as st
+import numpy as np
 import pandas as pd
+from tensorflow.keras.models import load_model
+from PIL import Image, UnidentifiedImageError
 
 # ---------- Config ----------
 IMG_TARGET_SIZE = (224, 224)  # change if your model expects another size
@@ -26,10 +26,10 @@ class_labels = [
     'Tomato___Tomato_mosaic_virus', 'Tomato___healthy'
 ]
 
-# ---------- UI ----------
+# ---------- Streamlit UI ----------
 st.set_page_config(page_title="Plant Disease Predictor — Upload Model & Image", layout="centered")
 st.title("🌿 Plant Disease Classifier")
-st.write("Upload your image. The app will load the model and predict the disease, then provide a short explanation.")
+st.write("Upload your `.h5` model and an image. The app will predict the disease and provide a short AI explanation.")
 
 uploaded_model = st.file_uploader("Upload Keras model file (.h5)", type=["h5"], key="model_uploader")
 uploaded_image = st.file_uploader("Upload an image (jpg / png)", type=["jpg", "jpeg", "png"], key="image_uploader")
@@ -43,7 +43,7 @@ if "GOOGLE_API_KEY" in st.secrets:
 def load_model_from_bytes(model_bytes: bytes):
     """
     Save uploaded bytes to a temp file and load the Keras model from disk.
-    compile=False is used to speed up load when training config is not needed.
+    compile=False speeds up load when training config is not needed.
     """
     tmp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".h5")
     tmp_path = tmp_file.name
@@ -93,7 +93,7 @@ if uploaded_model is not None and uploaded_image is not None:
         st.write(f"**Model file:** {getattr(uploaded_model, 'name', 'uploaded_model.h5')}  —  {sizeof_fmt(model_size)}")
 
         if model_size > 300 * 1024 * 1024:
-            st.warning("Uploaded model size exceeds 300 MB. Streamlit won't accept files larger than configured limit.")
+            st.warning("Uploaded model size exceeds 300 MB. Streamlit may reject very large files.")
         else:
             st.success("Model uploaded successfully.")
 
@@ -105,7 +105,7 @@ if uploaded_model is not None and uploaded_image is not None:
         try:
             image_bytes = uploaded_image.read()
             pil_img = Image.open(io.BytesIO(image_bytes))
-            pil_img.verify()
+            pil_img.verify()  # validate file
             pil_img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
         except UnidentifiedImageError:
             st.error("Uploaded file is not a valid image. Please upload JPG or PNG.")
@@ -136,7 +136,6 @@ if uploaded_model is not None and uploaded_image is not None:
             st.dataframe(df)
 
         # ----------------- AI Explanation (Gemini) -----------------
-        # Only attempt if GOOGLE_API_KEY is present and langchain_google_genai is installed
         if not os.environ.get("GOOGLE_API_KEY"):
             st.warning("GOOGLE_API_KEY not found in .streamlit/secrets.toml. AI explanation will be skipped.")
         else:
@@ -148,7 +147,7 @@ if uploaded_model is not None and uploaded_image is not None:
                 st.error(f"Could not import ChatGoogleGenerativeAI: {e}. Install the appropriate package to enable AI explanations.")
 
             if llm_available:
-                # Prepare a compact, farmer-friendly prompt
+                # Farmer-friendly prompt: recognition, quick actions, prevention — ≤100 words
                 prompt = (
                     f"Explain the plant disease '{top_label}' for a farmer in simple layman terms. "
                     "In up to 100 words describe: (1) how to recognize the disease (key signs), "
@@ -164,7 +163,7 @@ if uploaded_model is not None and uploaded_image is not None:
                     except Exception as e:
                         ai_response = f"AI generation failed: {e}"
 
-                st.subheader("🧠 AI Explanation (layman, ≤100 words)")
+                st.subheader("AI Explanation (layman, ≤100 words)")
                 st.write(ai_response)
 
     except Exception as e:
