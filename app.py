@@ -172,7 +172,6 @@ Wheat: Brown Rust, Yellow Rust, Healthy
 
 Your answer must be short, clear, structured, and farmer-friendly.
 """)
-                )
 
                 with st.spinner("Generating short explanation with AI..."):
                     try:
@@ -197,6 +196,7 @@ else:
     st.write("")
 
 st.markdown("---")
+
 
 
 
